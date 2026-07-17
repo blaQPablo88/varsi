@@ -1,0 +1,98 @@
+
+CREATE TABLE IF NOT EXISTS institutes (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    institute_name VARCHAR(100) NOT NULL,
+    institute_domain VARCHAR(55) NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE,
+    added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TYPE student_status AS ENUM (
+    'ACTIVE',
+    'BANNED',
+    'REPORTED'
+);
+
+CREATE TABLE IF NOT EXISTS students (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    institute_id BIGINT NOT NULL,
+    student_fullname VARCHAR(100) NOT NULL,
+    student_number VARCHAR(55) NOT NULL,
+    student_email VARCHAR(255) NOT NULL UNIQUE,
+    student_password VARCHAR(255) NOT NULL,
+    student_status student_status NOT NULL DEFAULT 'ACTIVE',
+    is_verified BOOLEAN DEFAULT FALSE,
+    added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (institute_id) REFERENCES institutes (id) ON DELETE CASCADE,
+    UNIQUE (institute_id, student_number)
+);
+
+
+CREATE TABLE IF NOT EXISTS categories (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    category_title VARCHAR(55) NOT NULL,
+    added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TYPE listing_status AS ENUM (
+    'AVAILABLE',
+    'SOLD',
+    'RESERVED',
+    'REMOVED'
+);
+
+CREATE TABLE IF NOT EXISTS listings (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    listing_title VARCHAR(55) NOT NULL,
+    listing_description TEXT NOT NULL,
+    listing_price DECIMAL(10,2) NOT NULL,
+    listing_status listing_status NOT NULL DEFAULT 'AVAILABLE',
+    listed_by BIGINT NOT NULL,
+    institute_id BIGINT NOT NULL,
+    category_id BIGINT NOT NULL,
+    added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (listed_by) REFERENCES students (id) ON DELETE CASCADE,
+    FOREIGN KEY (institute_id) REFERENCES institutes (id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories (id)
+);
+
+
+CREATE TABLE IF NOT EXISTS listing_images (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    image_url VARCHAR(512) NOT NULL,
+    listing_id BIGINT NOT NULL,
+    added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (listing_id) REFERENCES listings (id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE IF NOT EXISTS messages (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    listing_id BIGINT NOT NULL,
+    sender_id BIGINT NOT NULL,
+    recipient_id BIGINT NOT NULL,
+    message_content VARCHAR(255) NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (listing_id) REFERENCES listings (id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES students (id) ON DELETE CASCADE,
+    FOREIGN KEY (recipient_id) REFERENCES students (id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE IF NOT EXISTS wishlists (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    student_id BIGINT NOT NULL,
+    listing_id BIGINT NOT NULL,
+    added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students (id) ON DELETE CASCADE,
+    FOREIGN KEY (listing_id) REFERENCES listings (id) ON DELETE CASCADE,
+    UNIQUE (student_id, listing_id)
+);
